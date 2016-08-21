@@ -154,7 +154,10 @@ module.exports =
 		"keywords": [
 			"auth0",
 			"extension"
-		]
+		],
+		"auth0": {
+			"scopes": "read:connections"
+		}
 	};
 
 /***/ },
