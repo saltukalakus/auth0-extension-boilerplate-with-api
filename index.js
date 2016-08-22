@@ -11,6 +11,7 @@ app.use(require('./middleware/develop.js'));
 app.use('/api', api);
 
 app.use(auth0({
+  clientName: 'Auth0 Extension with Api Boilerplate',
   scopes: 'read:connections',
   apiToken: {
     payload: function (req, res, next) {
