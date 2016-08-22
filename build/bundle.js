@@ -47,37 +47,63 @@ module.exports =
 
 	'use strict';
 
-	var Webtask = __webpack_require__(1);
+	var nconf = __webpack_require__(1);
+	var Webtask = __webpack_require__(2);
 
-	// This is the entry-point for the Webpack build. We need to convert our module
-	// (which is a simple Express server) into a Webtask-compatible function.
-	module.exports = Webtask.fromExpress(__webpack_require__(2));
+	var server = null;
+	var getServer = function getServer(req, res) {
+	    if (!server) {
+	        nconf.defaults({
+	            AUTH0_DOMAIN: req.webtaskContext.secrets.AUTH0_DOMAIN,
+	            EXTENSION_SECRET: req.webtaskContext.secrets.EXTENSION_SECRET,
+	            WT_URL: req.webtaskContext.secrets.WT_URL,
+	            NODE_ENV: 'development',
+	            HOSTING_ENV: 'webtask',
+	            CLIENT_VERSION: process.env.CLIENT_VERSION
+	        });
+
+	        // Start the server.
+	        server = __webpack_require__(3);
+	    }
+	    return server(req, res);
+	};
+
+	module.exports = Webtask.fromExpress(function (req, res) {
+	    return getServer(req, res);
+	});
 
 /***/ },
 /* 1 */
 /***/ function(module, exports) {
 
-	module.exports = require("webtask-tools");
+	module.exports = require("nconf");
 
 /***/ },
 /* 2 */
+/***/ function(module, exports) {
+
+	module.exports = require("webtask-tools");
+
+/***/ },
+/* 3 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var express = __webpack_require__(3);
-	var Webtask = __webpack_require__(1);
+	var express = __webpack_require__(4);
+	var Webtask = __webpack_require__(2);
 	var app = express();
 	var api = express.Router();
-	var jwtExpress = __webpack_require__(4);
-	var auth0 = __webpack_require__(5);
-	var metadata = __webpack_require__(6);
+	var jwtExpress = __webpack_require__(5);
+	var auth0 = __webpack_require__(6);
+	var metadata = __webpack_require__(7);
 
-	app.use(__webpack_require__(7));
+	app.use(__webpack_require__(8));
 
 	app.use('/api', api);
 
 	app.use(auth0({
+	  clientName: 'Auth0 Extension with Api Boilerplate',
 	  scopes: 'read:connections',
 	  apiToken: {
 	    payload: function payload(req, res, next) {
@@ -122,31 +148,31 @@ module.exports =
 	module.exports = app;
 
 /***/ },
-/* 3 */
+/* 4 */
 /***/ function(module, exports) {
 
 	module.exports = require("express");
 
 /***/ },
-/* 4 */
+/* 5 */
 /***/ function(module, exports) {
 
 	module.exports = require("express-jwt");
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	module.exports = require("auth0-oauth2-express");
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	module.exports = {
 		"title": "Auth0 Extension Boilerplate with API",
 		"name": "auth0-extension-boilerplate-with-api",
-		"version": "1.0.0",
+		"version": "1.1.0",
 		"author": "auth0",
 		"description": "This is a Hello World extension",
 		"type": "application",
@@ -161,16 +187,16 @@ module.exports =
 	};
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var express = __webpack_require__(3);
+	var express = __webpack_require__(4);
 	var dev = express.Router();
 
 	if ((process.env.NODE_ENV || 'development') === 'development') {
-	  var token = __webpack_require__(8).randomBytes(32).toString('hex');
+	  var token = __webpack_require__(9).randomBytes(32).toString('hex');
 
 	  dev.use(function (req, res, next) {
 	    req.webtaskContext = {
@@ -196,7 +222,7 @@ module.exports =
 	module.exports = dev;
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	module.exports = require("crypto");
